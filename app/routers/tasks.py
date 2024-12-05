@@ -6,43 +6,32 @@ from app.models.task import Task
 # Create a Blueprint for task routes
 tasks_blueprint = Blueprint('tasks', __name__)
 
-# GET: Retrieve all tasks
-@tasks_blueprint.route("/tasks", methods=["GET"])
-def get_tasks():
+# GET and POST: Handle all tasks
+@tasks_blueprint.route('/tasks', methods=['GET', 'POST'])
+def handle_tasks():
     try:
         db: Session = next(get_db())
-        tasks = db.query(Task).all()
-        task_list = [
-            {
-                "id": task.id,
-                "title": task.title,
-                "description": task.description,
-                "due_date": task.due_date
-            }
-            for task in tasks
-        ]
-        return jsonify(task_list), 200
-    except Exception as e:
-        print(f"Error retrieving tasks: {e}")
-        return jsonify({"error": str(e)}), 500
 
-# POST: Save a new task
-@tasks_blueprint.route("/tasks", methods=["POST"])
-def save_task():
-    data = request.get_json()
-    try:
-        db: Session = next(get_db())
-        new_task = Task(
-            title=data['title'],
-            description=data.get('description'),
-            due_date=data.get('due_date')
-        )
-        db.add(new_task)
-        db.commit()
-        db.refresh(new_task)
-        return jsonify({"message": "Task saved", "task": data}), 201
+        if request.method == 'POST':
+            # Process incoming task data
+            data = request.get_json()
+            new_task = Task(
+                title=data.get('title'),
+                description=data.get('description'),
+                due_date=data.get('due_date'),
+            )
+            db.add(new_task)
+            db.commit()
+            db.refresh(new_task)
+            return jsonify({"message": "Task added successfully", "task": new_task.to_dict()}), 201
+
+        elif request.method == 'GET':
+            # Retrieve tasks
+            tasks = db.query(Task).all()
+            return jsonify([task.to_dict() for task in tasks]), 200
+
     except Exception as e:
-        print(f"Error saving task: {e}")
+        print(f"Error handling tasks: {e}")
         return jsonify({"error": str(e)}), 500
 
 # PUT: Update an existing task
@@ -58,7 +47,7 @@ def update_task(task_id):
             task.due_date = data.get('due_date', task.due_date)
             db.commit()
             db.refresh(task)
-            return jsonify({"message": "Task updated"}), 200
+            return jsonify({"message": "Task updated", "task": task.to_dict()}), 200
         else:
             return jsonify({"error": "Task not found"}), 404
     except Exception as e:
