@@ -4,7 +4,7 @@ from .database import engine, Base
 
 def create_app():
     app = Flask(__name__)
-
+    CORS(app)
     # Register blueprints
     app.register_blueprint(tasks.tasks_blueprint)
 
