@@ -2,3 +2,4 @@ flask
 flask-cors
 sqlalchemy
 cloud-sql-python-connector[pg8000]
+firebase-admin
