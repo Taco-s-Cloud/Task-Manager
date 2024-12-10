@@ -39,6 +39,7 @@ def save_task():
         db: Session = next(get_db())
         new_task = Task(
             title=data.get("title"),
+            user_id = request.user_uid,
             description=data.get("description"),
             due_date=data.get("due_date"),
             completed=data.get("completed", False),
