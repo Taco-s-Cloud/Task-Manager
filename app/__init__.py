@@ -5,7 +5,8 @@ from flask_cors import CORS
 
 def create_app():
     app = Flask(__name__)
-    CORS(app)
+    #CORS(app)
+    CORS(app, resources={r"/*": {"origins": "https://taco-ui-1024364663505.us-central1.run.app"}})
     # Register blueprints
     app.register_blueprint(tasks.tasks_blueprint)
 
