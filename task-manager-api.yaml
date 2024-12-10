@@ -1,0 +1,285 @@
+openapi: 3.0.0
+info:
+  title: Task Manager API
+  version: '1.0'
+  description: API for managing user tasks and assignments
+servers:
+  - url: http://localhost:5001
+    description: Local development server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user_id:
+          type: string
+          description: Firebase UID of the task owner
+        title:
+          type: string
+        description:
+          type: string
+        completed:
+          type: boolean
+          default: false
+        due_date:
+          type: string
+          format: date-time
+      required:
+        - title
+        - user_id
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+
+    TaskList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        _links:
+          type: object
+          properties:
+            self:
+              type: string
+              description: Current page URL
+            next:
+              type: string
+              description: Next page URL
+            prev:
+              type: string
+              description: Previous page URL
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+            pages:
+              type: integer
+            current_page:
+              type: integer
+            per_page:
+              type: integer
+
+security:
+  - bearerAuth: []
+
+paths:
+  /tasks:
+    get:
+      summary: Get user's tasks with pagination
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: X-Correlation-ID
+          in: header
+          schema:
+            type: string
+          description: Correlation ID for request tracing
+      responses:
+        '200':
+          description: List of user's tasks
+          headers:
+            X-Correlation-ID:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    title:
+                      type: string
+                    description:
+                      type: string
+                    due_date:
+                      type: string
+                      format: date-time
+                    completed:
+                      type: boolean
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    post:
+      summary: Create a new task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                due_date:
+                  type: string
+                  format: date-time
+                completed:
+                  type: boolean
+                  default: false
+              required:
+                - title
+      parameters:
+        - name: X-Correlation-ID
+          in: header
+          schema:
+            type: string
+          description: Correlation ID for request tracing
+      responses:
+        '201':
+          description: Task created successfully
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of created task
+            X-Correlation-ID:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  task:
+                    $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tasks/{task_id}:
+    parameters:
+      - name: task_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: X-Correlation-ID
+        in: header
+        schema:
+          type: string
+        description: Correlation ID for request tracing
+    
+    put:
+      summary: Update an existing task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                due_date:
+                  type: string
+                  format: date-time
+                completed:
+                  type: boolean
+      responses:
+        '200':
+          description: Task updated successfully
+          headers:
+            X-Correlation-ID:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      summary: Delete a task
+      responses:
+        '200':
+          description: Task deleted successfully
+          headers:
+            X-Correlation-ID:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
