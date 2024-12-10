@@ -13,7 +13,8 @@ tasks_blueprint = Blueprint("tasks", __name__)
 def get_tasks():
     try:
         db: Session = next(get_db())
-        tasks = db.query(Task).all()
+        user_id = request.user_uid
+        tasks = db.query(Task).filter(Task.user_id==user_id).all()
         task_list = [
             {
                 "id": task.id,
