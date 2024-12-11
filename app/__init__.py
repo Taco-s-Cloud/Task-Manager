@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request, g
 from .routers import tasks
 from .database import engine, Base
 from flask_cors import CORS
