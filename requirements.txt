@@ -3,4 +3,5 @@ flask-cors
 sqlalchemy
 cloud-sql-python-connector[pg8000]
 firebase-admin
+google-cloud-logging
 uuid
